@@ -1,6 +1,8 @@
 ﻿
+
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.OutputCaching;
 using MoviesApi.Entidades;
 
 namespace MoviesApi.Controllers
@@ -9,10 +11,20 @@ namespace MoviesApi.Controllers
     [Route("api/[controller]")]
     public class GeneroController:ControllerBase
     {
+        private readonly DatosClass datos;
+        private readonly IOutputCacheBufferStore oupotCache;
+
+        public GeneroController(DatosClass _datos, IOutputCacheBufferStore oupotCache)
+        {
+            datos = _datos;
+            this.oupotCache = oupotCache;
+        }
+
         [HttpGet]
+      
         public ActionResult<List<GeneroClass>> Get()
         {
-            DatosClass datos = new DatosClass();
+           
             List<GeneroClass> lista = datos.getListGenero();
 
             if (lista.Count==0)
@@ -23,10 +35,11 @@ namespace MoviesApi.Controllers
         }
 
         [HttpGet("id")]
+        [OutputCache]
         public ActionResult<GeneroClass> GetById(int id)
         {
-            DatosClass dato=   new DatosClass();
-            GeneroClass genero=  dato.getGenero(id);
+            
+            GeneroClass genero=  datos.getGenero(id);
             if (genero is null)
             {
                 return NotFound();
@@ -36,9 +49,14 @@ namespace MoviesApi.Controllers
         }
 
         [HttpPost]
-        public void Post()
+        public IActionResult Post([FromBody] GeneroClass genero)
         {
-
+            
+            if (datos.isExisteGenero(genero.Nombre))
+            {
+                return BadRequest($"Ya existe este genero{genero.Nombre}");
+            }
+            return Ok();
         }
 
         [HttpPut]
